@@ -621,6 +621,7 @@ version = "0.0.0"
 dependencies = [
  "dll-syringe",
  "exe",
+ "iced-x86",
  "volatile",
  "windows",
 ]

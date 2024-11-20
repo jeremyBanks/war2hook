@@ -1,3 +1,1 @@
-gold: 0, lumber: 0, oil: 0
-gold: 1000, lumber: 1000, oil: 0
-gold: 1337, lumber: 1337, oil: 1337
+assembling hook!
