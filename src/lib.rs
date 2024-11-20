@@ -1,5 +1,11 @@
 use {
-    std::{fs::OpenOptions, io::Write, ptr::NonNull, time::Duration},
+    std::{
+        ffi::{c_char, CString},
+        fs::OpenOptions,
+        io::Write,
+        ptr::NonNull,
+        time::Duration,
+    },
     volatile::VolatilePtr,
     windows::{
         core::*,
@@ -38,7 +44,8 @@ fn attach() {
         let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
         let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
 
-        let displayMessage: extern fn() = unsafe { std::mem::transmute(0x0042ca40) };
+        let displayMessage: extern fn(message: *const i8, _2: u8, _3: u32) =
+            unsafe { std::mem::transmute(0x0042ca40) };
 
         let mut last_line = String::new();
 
@@ -59,6 +66,8 @@ fn attach() {
                 gold.write(1337);
                 lumber.write(1337);
                 oil.write(1337);
+
+                displayMessage(CString::new("let's top you up!").unwrap().as_ptr(), 0, 0);
             }
 
             std::thread::sleep(Duration::from_secs(1));
