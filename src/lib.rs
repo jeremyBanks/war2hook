@@ -26,8 +26,6 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
 }
 
 fn attach() {
-    let pid = unsafe { GetCurrentProcessId() };
-
     let mut log = OpenOptions::new()
         .write(true)
         .create(true)
@@ -35,27 +33,35 @@ fn attach() {
         .open("C:\\Users\\_\\war2hook\\log.txt")
         .expect("Unable to open log file");
 
-    std::thread::spawn(move || loop {
+    std::thread::spawn(move || {
         let gold = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABB18 as *mut u32)) };
         let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
         let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
 
-        let current_gold = gold.read();
-        let current_lumber = lumber.read();
-        let current_oil = oil.read();
+        let displayMessage: extern fn() = unsafe { std::mem::transmute(0x0042ca40) };
 
-        writeln!(
-            log,
-            "gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}"
-        )
-        .unwrap();
+        let mut last_line = String::new();
 
-        if current_gold > 0 {
-            gold.write(1337);
-            lumber.write(1337);
-            oil.write(1337);
+        loop {
+            let current_gold = gold.read();
+            let current_lumber = lumber.read();
+            let current_oil = oil.read();
+
+            let line =
+                format!("gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}\n");
+
+            if line != last_line {
+                log.write_all(line.as_bytes()).unwrap();
+                last_line = line;
+            }
+
+            if current_gold > 0 {
+                gold.write(1337);
+                lumber.write(1337);
+                oil.write(1337);
+            }
+
+            std::thread::sleep(Duration::from_secs(1));
         }
-
-        std::thread::sleep(Duration::from_secs(1));
     });
 }
