@@ -1,15 +1,21 @@
-use std::time::Duration;
-
-use windows::Win32::System::Threading::GetCurrentProcessId;
-use windows::{core::*, Win32::UI::WindowsAndMessaging::MessageBoxA};
-use windows::{Win32::Foundation::*, Win32::System::SystemServices::*};
+use {
+    std::time::Duration,
+    windows::{
+        core::*,
+        Win32::{
+            Foundation::*,
+            System::{SystemServices::*, Threading::GetCurrentProcessId},
+            UI::WindowsAndMessaging::MessageBoxA,
+        },
+    },
+};
 
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
     match call_reason {
         DLL_PROCESS_ATTACH => attach(),
-        DLL_PROCESS_DETACH => { /* is this going to segfault? */ }
+        DLL_PROCESS_DETACH => { /* is this going to segfault? */ },
         _ => (),
     }
 

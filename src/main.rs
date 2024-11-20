@@ -1,11 +1,15 @@
-use dll_syringe::process::Process;
-use dll_syringe::{process::OwnedProcess, Syringe};
-use std::{thread, time};
+use {
+    dll_syringe::{
+        process::{OwnedProcess, Process},
+        Syringe,
+    },
+    std::{thread, time},
+};
 
 fn main() {
     // let mut process =
-    //     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
-    //         .spawn()
+    //     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II
+    // BNE.exe")         .spawn()
     //         .expect("failed to launch warcraft 2");
     //
     // thread::sleep(time::Duration::from_secs(6));
