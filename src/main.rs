@@ -7,12 +7,13 @@ use {
 };
 
 fn main() {
-    // let mut process =
-    //     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II
-    // BNE.exe")         .spawn()
-    //         .expect("failed to launch warcraft 2");
-    //
-    // thread::sleep(time::Duration::from_secs(6));
+    println!("Launching game");
+    let mut process =
+        std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
+            .spawn()
+            .expect("failed to launch warcraft 2");
+
+    thread::sleep(time::Duration::from_secs(6));
 
     // find target process by name
     let target_process = OwnedProcess::find_first_by_name("Warcraft II BNE.exe")
@@ -28,5 +29,6 @@ fn main() {
 
     let syringe = Syringe::for_process(target_process);
 
+    println!("Injecting DLL");
     let injected_payload = syringe.inject(dll_path).expect("failed to inject DLL");
 }
