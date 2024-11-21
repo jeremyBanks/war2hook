@@ -1,5 +1,4 @@
 use {
-    bstr::BStr,
     eyre,
     iced_x86::{self, code_asm::CodeAssembler},
     std::{
@@ -24,6 +23,8 @@ use {
     },
 };
 
+mod war2types;
+
 #[no_mangle]
 #[allow(non_snake_case, unused_variables)]
 extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
@@ -38,7 +39,6 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
     true
 }
 
-#[no_mangle]
 extern fn apply_cheats_hook() {
     let mut log = OpenOptions::new()
         .write(true)

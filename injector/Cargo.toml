@@ -1,0 +1,17 @@
+[package]
+name = "war2injector"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "war2injector"
+path = "main.rs"
+
+[dependencies]
+dll-syringe.workspace = true
+
+# We don't actually use the injection library from the injector binary,
+# but we add it as a dependency to ensure it's always re-built if neccessary
+# when building the binary.
+war2injection = { path = "../injection" }
