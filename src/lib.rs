@@ -6,6 +6,7 @@ use {
         ffi::{c_char, CString},
         fs::OpenOptions,
         io::Write,
+        mem::transmute,
         ptr::NonNull,
         time::Duration,
     },
@@ -53,7 +54,7 @@ extern fn apply_cheats_hook() {
     let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
 
     let display_message: extern fn(message: *const i8, _2: u8, _3: u32) =
-        unsafe { std::mem::transmute(0x4_2CA40) };
+        unsafe { transmute(0x4_2CA40) };
 
     let current_gold = gold.read();
     let current_lumber = lumber.read();
@@ -80,49 +81,66 @@ fn attach() {
 
     // TODO: eyre for ?, and catch panic and log it
 
-    writeln!(log, "assembling hook!").unwrap();
-    let call_hook = {
+    writeln!(log, "assembling and installing hook").unwrap();
+
+    let hook_function_address = apply_cheats_hook as u32;
+
+    // Address at the beginning of the 'day' cheat code branch inside the
+    // function that applies cheat codes.
+    let replacement_address: u32 = 0x4_160A4;
+
+    // The instructions we're going to be putting in that branch instead,
+    // to call our hook function instead of the default behavior.
+    let replacement_instructions = {
         use iced_x86::code_asm::*;
 
-        let mut a = CodeAssembler::new(32).unwrap();
+        let mut asm = CodeAssembler::new(32).unwrap();
 
-        // iced_x86 expects a u64 for this absolute address, even though
+        // iced_x86 expects a u64 for absolute addresses, even though
         // this program and the assembler are both targeting 32-bit.
-        a.call(apply_cheats_hook as u64).unwrap();
-        a.pop(esi).unwrap();
-        a.pop(ebp).unwrap();
-        a.add(esp, 0x80).unwrap();
-        a.ret().unwrap();
+        asm.call(u64::from(hook_function_address)).unwrap();
 
-        a.assemble(0x4_160A4).unwrap()
+        // After calling our function, we immediately return from the patched
+        // function to avoid running any subsequent instructions (which may
+        // no longer even decode as real instructions, since we may have just
+        // overwritten the first bytes of one and screwed up their alignment).
+        // We copied these instructions from other returns in the function.
+        //
+        // Restore two registers, which have been used for local variables in
+        // this function, to their values from before the function was called.
+        asm.pop(esi).unwrap();
+        asm.pop(ebp).unwrap();
+        // Adjust the stack to remove 128 bytes that had been allocated for
+        // a too-large-for-registers local variable within the function.
+        asm.add(esp, 0x80).unwrap();
+        // Return
+        asm.ret().unwrap();
+
+        asm.assemble(u64::from(replacement_address)).unwrap()
     };
 
-    writeln!(log, "assembled hook call:    {}", hex::encode(&call_hook)).unwrap();
+    // Slice of the memory we're overwriting.
+    let replacement_slice: &mut [u8] = unsafe {
+        std::slice::from_raw_parts_mut(
+            transmute(replacement_address),
+            replacement_instructions.len(),
+        )
+    };
 
-    // We're hooking the "day" cheat code, by overwriting the
-    // instructions at 0x4_160a4 with our assembled bytes. It returns,
-    // so we don't have to worry about corrupting the subsequent
-    // instructions if ours doesn't align.
-    let target: &mut [u8] =
-        unsafe { std::slice::from_raw_parts_mut(std::mem::transmute(0x4_160A4), call_hook.len()) };
-
-    writeln!(log, "replacing at 0x4_160A4: {}", hex::encode(&target)).unwrap();
-
-    writeln!(log, "disabling memory protection!").unwrap();
-
+    // Remove read-only protection from the target memory, which the original
+    // compiler applied automatically to executable memory/instructions.
     unsafe {
         VirtualProtect(
-            std::mem::transmute(0x4_160A4),
-            call_hook.len(),
+            transmute(replacement_address),
+            replacement_instructions.len(),
             PAGE_EXECUTE_READWRITE,
             &mut PAGE_PROTECTION_FLAGS(0),
         )
         .unwrap();
     }
 
-    writeln!(log, "installing hook!").unwrap();
-
-    target.copy_from_slice(&call_hook);
+    // Apply the change.
+    replacement_slice.copy_from_slice(&replacement_instructions);
 
     writeln!(log, "installed hook!").unwrap();
 }
