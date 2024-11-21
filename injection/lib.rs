@@ -50,22 +50,38 @@ extern fn apply_cheats_hook() {
 
     writeln!(log, "you did it! it worked!").unwrap();
 
-    let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
-    let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
-
-    let current_gold = PLAYER_1_GOLD.get().read();
-    let current_lumber = lumber.read();
-    let current_oil = oil.read();
+    let current_gold = PLAYERS_GOLD.get().read()[0];
+    let current_lumber = PLAYERS_LUMBER.get().read()[0];
+    let current_oil = PLAYERS_OIL.get().read()[0];
 
     let line = format!("gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}\n");
 
     log.write_all(line.as_bytes()).unwrap();
 
-    display_message(c"Let's give you some resources!".as_ptr(), 8, 100);
+    display_message(c"player 0".as_ptr(), 0, 100);
+    display_message(c"player 1".as_ptr(), 1, 100);
+    display_message(c"player 2".as_ptr(), 2, 100);
+    display_message(c"player 3".as_ptr(), 3, 100);
+    display_message(c"player 4".as_ptr(), 4, 100);
+    display_message(c"player 5".as_ptr(), 5, 100);
+    display_message(c"player 6".as_ptr(), 6, 100);
+    display_message(c"player 7".as_ptr(), 7, 100);
+    display_message(c"player 8".as_ptr(), 8, 100);
+    display_message(c"player 9".as_ptr(), 9, 100);
+    display_message(c"player 10".as_ptr(), 10, 100);
 
-    PLAYER_1_GOLD.get().write(1337);
-    lumber.write(1337);
-    oil.write(1337);
+    PLAYERS_GOLD.get().update(|mut p| {
+        p[0] = 1337;
+        p
+    });
+    PLAYERS_LUMBER.get().update(|mut p| {
+        p[0] = 1337;
+        p
+    });
+    PLAYERS_OIL.get().update(|mut p| {
+        p[0] = 1337;
+        p
+    });
 }
 
 fn attach() {

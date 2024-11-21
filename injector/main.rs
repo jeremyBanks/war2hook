@@ -9,6 +9,7 @@ use {
 fn main() {
     println!("Launching game");
     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
+        .args(["tigerlily", "orc1"])
         .spawn()
         .expect("failed to launch warcraft 2");
 

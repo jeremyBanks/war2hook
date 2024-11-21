@@ -63,11 +63,25 @@ macro_rules! data_by_address {
     };
 }
 
+/// The maximum number of players in the game is actually 8,
+/// but most of the code seems to be written for 16 instead.
+pub const MAX_PLAYERS: usize = 16;
+pub const MAX_HUMAN_PLAYERS: u8 = 8;
+
 fn_by_address! {
-    /// Displays a message at the bottom of the game screen, such as for chat.
-    pub display_message: extern fn(message: *const i8, _2: u8, _3: u32) = 0x4_2CA40;
+    /// Displays a message at the bottom of the game screen.
+    ///
+    /// `playerIndex` may be the number of a player in the game, which will
+    /// prefix their name (for a chat message), or it may be
+    /// `MAX_HUMAN_PLAYERS` for a non-prefixed system message.
+    ///
+    /// `duration` seems related to how long the message should remain on the
+    /// screen. `100` is a safe value.
+    pub display_message: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
 }
 
 data_by_address! {
-    pub PLAYER_1_GOLD: u32 = 0x4_ABB18;
+    pub PLAYERS_GOLD:   [u32; MAX_PLAYERS] = 0x4_ABB18;
+    pub PLAYERS_LUMBER: [u32; MAX_PLAYERS] = 0x4_ACB6C;
+    pub PLAYERS_OIL:    [u32; MAX_PLAYERS] = 0x4_ABBFC;
 }
