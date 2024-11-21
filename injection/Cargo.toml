@@ -10,6 +10,8 @@ path = "lib.rs"
 
 [dependencies]
 eyre.workspace = true
+fragile.workspace = true
 iced-x86.workspace = true
+paste = "1.0.15"
 volatile.workspace = true
 windows.workspace = true

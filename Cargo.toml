@@ -11,6 +11,7 @@ license = "NONE"
 [workspace.dependencies]
 dll-syringe = { version = "0.15.2", features = ["into-x86-from-x64"] }
 eyre = "0.6.12"
+fragile = "2.0.0"
 hex = "0.4.3"
 iced-x86 = { version = "1.21.0", features = ["code_asm"] }
 volatile = "0.6.1"

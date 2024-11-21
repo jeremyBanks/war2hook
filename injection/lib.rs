@@ -1,4 +1,5 @@
 use {
+    crate::war2types::*,
     eyre,
     iced_x86::{self, code_asm::CodeAssembler},
     std::{
@@ -49,14 +50,10 @@ extern fn apply_cheats_hook() {
 
     writeln!(log, "you did it! it worked!").unwrap();
 
-    let gold = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABB18 as *mut u32)) };
     let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
     let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
 
-    let display_message: extern fn(message: *const i8, _2: u8, _3: u32) =
-        unsafe { transmute(0x4_2CA40) };
-
-    let current_gold = gold.read();
+    let current_gold = PLAYER_1_GOLD.get().read();
     let current_lumber = lumber.read();
     let current_oil = oil.read();
 
@@ -66,7 +63,7 @@ extern fn apply_cheats_hook() {
 
     display_message(c"Let's give you some resources!".as_ptr(), 8, 100);
 
-    gold.write(1337);
+    PLAYER_1_GOLD.get().write(1337);
     lumber.write(1337);
     oil.write(1337);
 }
