@@ -16,6 +16,7 @@ use {
             System::{
                 Memory::{VirtualProtect, PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS},
                 SystemServices::*,
+                Threading::GetCurrentProcessId,
             },
         },
     },
@@ -36,12 +37,12 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
 }
 
 #[no_mangle]
-extern fn apply_cheats_hook(_newCheats: u32, _2: i32) {
+extern fn apply_cheats_hook() {
     let mut hook_log = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open("C:\\Users\\_\\war2hook\\main-thread.txt")
+        .open("C:\\Users\\_\\war2hook\\main-thread.log")
         .expect("Unable to open log file");
 
     writeln!(hook_log, "you did it! it worked!").unwrap();
@@ -55,17 +56,26 @@ fn attach() {
         .open("C:\\Users\\_\\war2hook\\attachment-thread.log")
         .expect("Unable tzo open log file");
 
+    // TODO: eyre for ?, and catch panic and log it
+
     writeln!(log, "assembling hook!").unwrap();
     let call_hook = {
         use iced_x86::code_asm::*;
 
         let mut a = CodeAssembler::new(32).unwrap();
 
-        a.call(word_ptr(apply_cheats_hook as u32)).unwrap();
+        a.call(apply_cheats_hook as u64).unwrap();
+
+        a.pop(esi).unwrap();
+        a.pop(ebp).unwrap();
+        a.add(esp, 0x80).unwrap();
 
         a.ret().unwrap();
 
-        a.assemble(0).unwrap()
+        // Is this base address wrong?
+        // It must be, because if I just insert the return, it works.
+        // so it's the .call that's broken.
+        a.assemble(0x4_160A4).unwrap()
     };
 
     writeln!(log, "assembled hook call:    {}", hex::encode(&call_hook)).unwrap();
@@ -87,7 +97,8 @@ fn attach() {
             call_hook.len(),
             PAGE_EXECUTE_READWRITE,
             &mut PAGE_PROTECTION_FLAGS(0),
-        );
+        )
+        .unwrap();
     }
 
     writeln!(log, "installing hook!").unwrap();
