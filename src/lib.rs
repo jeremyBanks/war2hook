@@ -1,5 +1,6 @@
 use {
     bstr::BStr,
+    eyre,
     iced_x86::{self, code_asm::CodeAssembler},
     std::{
         ffi::{c_char, CString},
@@ -38,14 +39,35 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
 
 #[no_mangle]
 extern fn apply_cheats_hook() {
-    let mut hook_log = OpenOptions::new()
+    let mut log = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
         .open("C:\\Users\\_\\war2hook\\main-thread.log")
         .expect("Unable to open log file");
 
-    writeln!(hook_log, "you did it! it worked!").unwrap();
+    writeln!(log, "you did it! it worked!").unwrap();
+
+    let gold = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABB18 as *mut u32)) };
+    let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
+    let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
+
+    let display_message: extern fn(message: *const i8, _2: u8, _3: u32) =
+        unsafe { std::mem::transmute(0x4_2CA40) };
+
+    let current_gold = gold.read();
+    let current_lumber = lumber.read();
+    let current_oil = oil.read();
+
+    let line = format!("gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}\n");
+
+    log.write_all(line.as_bytes()).unwrap();
+
+    display_message(c"Let's give you some resources!".as_ptr(), 8, 100);
+
+    gold.write(1337);
+    lumber.write(1337);
+    oil.write(1337);
 }
 
 fn attach() {
@@ -64,17 +86,14 @@ fn attach() {
 
         let mut a = CodeAssembler::new(32).unwrap();
 
+        // iced_x86 expects a u64 for this absolute address, even though
+        // this program and the assembler are both targeting 32-bit.
         a.call(apply_cheats_hook as u64).unwrap();
-
         a.pop(esi).unwrap();
         a.pop(ebp).unwrap();
         a.add(esp, 0x80).unwrap();
-
         a.ret().unwrap();
 
-        // Is this base address wrong?
-        // It must be, because if I just insert the return, it works.
-        // so it's the .call that's broken.
         a.assemble(0x4_160A4).unwrap()
     };
 
@@ -106,42 +125,4 @@ fn attach() {
     target.copy_from_slice(&call_hook);
 
     writeln!(log, "installed hook!").unwrap();
-
-    std::thread::spawn(move || {
-        let gold = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABB18 as *mut u32)) };
-        let lumber = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ACB6C as *mut u32)) };
-        let oil = unsafe { VolatilePtr::new(NonNull::new_unchecked(0x4_ABBFC as *mut u32)) };
-
-        let apply_cheats: extern fn(newCheats: u32, _2: i32) =
-            unsafe { std::mem::transmute(0x4_15EC0) };
-
-        let display_message: extern fn(message: *const i8, _2: u8, _3: u32) =
-            unsafe { std::mem::transmute(0x4_2CA40) };
-
-        let mut last_line = String::new();
-
-        loop {
-            let current_gold = gold.read();
-            let current_lumber = lumber.read();
-            let current_oil = oil.read();
-
-            let line =
-                format!("gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}\n");
-
-            if line != last_line {
-                log.write_all(line.as_bytes()).unwrap();
-                last_line = line;
-            }
-
-            if current_gold > 0 && current_gold < 1337 {
-                gold.write(1337);
-                lumber.write(1337);
-                oil.write(1337);
-
-                display_message(c"Let's give you more resources!".as_ptr(), 8, 100);
-            }
-
-            std::thread::sleep(Duration::from_secs(1));
-        }
-    });
 }
