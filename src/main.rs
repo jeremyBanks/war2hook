@@ -12,7 +12,7 @@ fn main() {
         .spawn()
         .expect("failed to launch warcraft 2");
 
-    thread::sleep(time::Duration::from_secs(6));
+    thread::sleep(time::Duration::from_secs(2));
 
     // find target process by name
     let target_process = OwnedProcess::find_first_by_name("Warcraft II BNE.exe")
@@ -25,3 +25,6 @@ fn main() {
     println!("Injecting DLL");
     syringe.inject(dll_path).expect("failed to inject DLL");
 }
+
+#[no_mangle]
+extern fn apply_cheats_hook(newCheats: u32, _2: i32) {}
