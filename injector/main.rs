@@ -15,31 +15,8 @@ use {
     },
 };
 
-static LOG_FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
-    let date = chrono::Utc::now();
-    let date = date.format("%Y-%M-%D-%H").to_string();
-
-    println!("{date}");
-
-    let log_path = format!("C:\\Users\\_\\war2hook\\logs\\{date}.log");
-
-    Mutex::new(
-        OpenOptions::new()
-            .write(true)
-            .create(true)
-            .append(true)
-            .open(log_path)
-            .expect("Unable to open log file"),
-    )
-});
-
 fn main() {
     println!("Launching WarCraft II");
-
-    let mut log = LOG_FILE.lock().unwrap();
-
-    let date = chrono::Utc::now().format("%H:%M:%S%.3f").to_string();
-    writeln!(log, "{date} injector: this is a test").unwrap();
 
     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
         .args(["tigerlily", "orc4"])

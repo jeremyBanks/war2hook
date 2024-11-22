@@ -51,14 +51,14 @@ macro_rules! wcprintln {
             writeln!(LOG_FILE.lock().unwrap(), "{date} {message_string}").unwrap();
             let message_cstring = CString::new(message_string).unwrap();
             let message_pointer = message_cstring.as_ptr();
-            DISPLAY_MESSAGE(message_pointer, MAX_HUMAN_PLAYERS, 0);
+            DISPLAY_MESSAGE(message_pointer, 0, 0);
         }
     };
 }
 
 static LOG_FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
     let date = chrono::Utc::now();
-    let date = date.format("%Y-%M-%D-%H");
+    let date = date.format("%Y-%M-%d-%H");
 
     let log_path = format!("C:\\Users\\_\\war2hook\\logs\\{date}.log");
 
@@ -79,10 +79,6 @@ extern fn apply_cheats_hook() {
     let current_lumber = unsafe { PLAYERS_LUMBER.get().read()[0] };
     let current_oil = unsafe { PLAYERS_OIL.get().read()[0] };
 
-    wcprintln!("  gold: {current_gold}");
-    wcprintln!("lumber: {current_lumber}");
-    wcprintln!("   oil: {current_oil}");
-
     unsafe {
         PLAYERS_GOLD
             .get()
@@ -96,15 +92,18 @@ extern fn apply_cheats_hook() {
     }
 
     wcprintln!("Set all of your resources to 1337 and removed all of your opponent's resources.");
+
+    let state = unsafe { GAME_STATE.get().read_volatile() };
+    wcprintln!("game state: {state:?}");
 }
 
 fn attach() {
     let date = chrono::Utc::now();
-    let date = date.format("[attaching] %H:%M:%S%.3f");
+    let date = date.format("%H:%M:%S%.3f [attaching]");
 
     let mut log = LOG_FILE.lock().unwrap();
 
-    writeln!(log, "{date} attach(): assembling and installing hooks").unwrap();
+    writeln!(log, "{date} assembling and installing hooks").unwrap();
 
     let hook_function_address = apply_cheats_hook as u32;
 

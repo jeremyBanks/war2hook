@@ -67,6 +67,7 @@ fn_by_address! {
     /// `playerIndex` may be the number of a player in the game, which will
     /// prefix their name (for a chat message), or it may be
     /// `MAX_HUMAN_PLAYERS` for a non-prefixed system message.
+    /// However, only one system message can be displayed at time.
     ///
     /// `duration` controls how long the message is displayed.
     pub DISPLAY_MESSAGE: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
@@ -76,4 +77,16 @@ data_by_address! {
     pub PLAYERS_GOLD:   [u32; MAX_PLAYERS] = 0x4_ABB18;
     pub PLAYERS_LUMBER: [u32; MAX_PLAYERS] = 0x4_ACB6C;
     pub PLAYERS_OIL:    [u32; MAX_PLAYERS] = 0x4_ABBFC;
+
+    pub GAME_STATE:     GameState          = 0x4_AE480;
+}
+
+#[repr(u16)]
+#[derive(Debug, Copy, Clone)]
+#[non_exhaustive]
+pub enum GameState {
+    Playing = 3,
+    Menu = 4,
+    Victory = 6,
+    Defeat = 7,
 }
