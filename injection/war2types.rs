@@ -14,7 +14,6 @@ macro_rules! fn_by_address {
     )+) => {
         $(
             $(#[$($attrss)*])*
-            #[allow(non_upper_case_globals)]
             $vis static $name: ::std::sync::LazyLock<$signature> =
                 ::std::sync::LazyLock::new(||
                     unsafe { ::core::mem::transmute($address)
@@ -44,18 +43,12 @@ macro_rules! data_by_address {
             $(#[$($attrss)*])*
             $vis static $name: ::std::sync::LazyLock<
                 ::fragile::Fragile<
-                    ::volatile::VolatilePtr<
-                        $signature
-                    >
+                    *mut $signature
                 >
             > = unsafe {
                 ::std::sync::LazyLock::new(||
                     ::fragile::Fragile::new(
-                        ::volatile::VolatilePtr::new(
-                            ::core::ptr::NonNull::new_unchecked(
-                                ::core::mem::transmute($address)
-                            )
-                        )
+                        ::core::mem::transmute($address)
                     )
                 )
             };
@@ -75,9 +68,8 @@ fn_by_address! {
     /// prefix their name (for a chat message), or it may be
     /// `MAX_HUMAN_PLAYERS` for a non-prefixed system message.
     ///
-    /// `duration` seems related to how long the message should remain on the
-    /// screen. `100` is a safe value.
-    pub display_message: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
+    /// `duration` controls how long the message is displayed.
+    pub DISPLAY_MESSAGE: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
 }
 
 data_by_address! {

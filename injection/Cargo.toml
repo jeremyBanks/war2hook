@@ -9,9 +9,9 @@ crate-type = ["cdylib"]
 path = "lib.rs"
 
 [dependencies]
+chrono = "0.4.38"
 eyre.workspace = true
 fragile.workspace = true
 iced-x86.workspace = true
-paste = "1.0.15"
-volatile.workspace = true
+paste.workspace = true
 windows.workspace = true

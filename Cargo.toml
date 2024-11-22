@@ -14,7 +14,7 @@ eyre = "0.6.12"
 fragile = "2.0.0"
 hex = "0.4.3"
 iced-x86 = { version = "1.21.0", features = ["code_asm"] }
-volatile = "0.6.1"
+paste = "1.0.15"
 
 [workspace.dependencies.windows]
 version = "0.58.0"

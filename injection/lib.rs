@@ -4,13 +4,13 @@ use {
     iced_x86::{self, code_asm::CodeAssembler},
     std::{
         ffi::{c_char, CString},
-        fs::OpenOptions,
+        fs::{File, OpenOptions},
         io::Write,
         mem::transmute,
         ptr::NonNull,
+        sync::{LazyLock, Mutex},
         time::Duration,
     },
-    volatile::VolatilePtr,
     windows::{
         core::*,
         Win32::{
@@ -40,61 +40,71 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
     true
 }
 
+/// Prints a message to the log file and to the in-game text output.
+macro_rules! wcprintln {
+    ($($arg:tt)*) => {
+        {
+            let date = chrono::Utc::now();
+            let date = date.format("%H:%M:%S%.3f");
+
+            let message_string = format!($($arg)*);
+            writeln!(LOG_FILE.lock().unwrap(), "{date} {message_string}").unwrap();
+            let message_cstring = CString::new(message_string).unwrap();
+            let message_pointer = message_cstring.as_ptr();
+            DISPLAY_MESSAGE(message_pointer, MAX_HUMAN_PLAYERS, 0);
+        }
+    };
+}
+
+static LOG_FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
+    let date = chrono::Utc::now();
+    let date = date.format("%Y-%M-%D-%H");
+
+    let log_path = format!("C:\\Users\\_\\war2hook\\logs\\{date}.log");
+
+    Mutex::new(
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(log_path)
+            .expect("Unable to open log file"),
+    )
+});
+
 extern fn apply_cheats_hook() {
-    let mut log = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open("C:\\Users\\_\\war2hook\\main-thread.log")
-        .expect("Unable to open log file");
+    wcprintln!("handling 'day' cheat code");
 
-    writeln!(log, "you did it! it worked!").unwrap();
+    let current_gold = unsafe { PLAYERS_GOLD.get().read()[0] };
+    let current_lumber = unsafe { PLAYERS_LUMBER.get().read()[0] };
+    let current_oil = unsafe { PLAYERS_OIL.get().read()[0] };
 
-    let current_gold = PLAYERS_GOLD.get().read()[0];
-    let current_lumber = PLAYERS_LUMBER.get().read()[0];
-    let current_oil = PLAYERS_OIL.get().read()[0];
+    wcprintln!("  gold: {current_gold}");
+    wcprintln!("lumber: {current_lumber}");
+    wcprintln!("   oil: {current_oil}");
 
-    let line = format!("gold: {current_gold}, lumber: {current_lumber}, oil: {current_oil}\n");
+    unsafe {
+        PLAYERS_GOLD
+            .get()
+            .write_volatile([1337, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        PLAYERS_LUMBER
+            .get()
+            .write_volatile([1337, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        PLAYERS_OIL
+            .get()
+            .write_volatile([1337, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }
 
-    log.write_all(line.as_bytes()).unwrap();
-
-    display_message(c"player 0".as_ptr(), 0, 100);
-    display_message(c"player 1".as_ptr(), 1, 100);
-    display_message(c"player 2".as_ptr(), 2, 100);
-    display_message(c"player 3".as_ptr(), 3, 100);
-    display_message(c"player 4".as_ptr(), 4, 100);
-    display_message(c"player 5".as_ptr(), 5, 100);
-    display_message(c"player 6".as_ptr(), 6, 100);
-    display_message(c"player 7".as_ptr(), 7, 100);
-    display_message(c"player 8".as_ptr(), 8, 100);
-    display_message(c"player 9".as_ptr(), 9, 100);
-    display_message(c"player 10".as_ptr(), 10, 100);
-
-    PLAYERS_GOLD.get().update(|mut p| {
-        p[0] = 1337;
-        p
-    });
-    PLAYERS_LUMBER.get().update(|mut p| {
-        p[0] = 1337;
-        p
-    });
-    PLAYERS_OIL.get().update(|mut p| {
-        p[0] = 1337;
-        p
-    });
+    wcprintln!("Set all of your resources to 1337 and removed all of your opponent's resources.");
 }
 
 fn attach() {
-    let mut log = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open("C:\\Users\\_\\war2hook\\attachment-thread.log")
-        .expect("Unable tzo open log file");
+    let date = chrono::Utc::now();
+    let date = date.format("[attaching] %H:%M:%S%.3f");
 
-    // TODO: eyre for ?, and catch panic and log it
+    let mut log = LOG_FILE.lock().unwrap();
 
-    writeln!(log, "assembling and installing hook").unwrap();
+    writeln!(log, "{date} attach(): assembling and installing hooks").unwrap();
 
     let hook_function_address = apply_cheats_hook as u32;
 
@@ -155,5 +165,5 @@ fn attach() {
     // Apply the change.
     replacement_slice.copy_from_slice(&replacement_instructions);
 
-    writeln!(log, "installed hook!").unwrap();
+    writeln!(log, "{date} attach(): hook installed").unwrap();
 }

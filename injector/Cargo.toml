@@ -9,6 +9,7 @@ name = "war2injector"
 path = "main.rs"
 
 [dependencies]
+chrono = "0.4.38"
 dll-syringe.workspace = true
 
 # We don't actually use the injection library from the injector binary,
