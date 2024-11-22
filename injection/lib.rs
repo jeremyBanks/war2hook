@@ -40,22 +40,6 @@ extern "system" fn DllMain(dll_module: HINSTANCE, call_reason: u32, _: *mut ()) 
     true
 }
 
-/// Prints a message to the log file and to the in-game text output.
-macro_rules! wcprintln {
-    ($($arg:tt)*) => {
-        {
-            let date = chrono::Utc::now();
-            let date = date.format("%H:%M:%S%.3f");
-
-            let message_string = format!($($arg)*);
-            writeln!(LOG_FILE.lock().unwrap(), "{date} {message_string}").unwrap();
-            let message_cstring = CString::new(message_string).unwrap();
-            let message_pointer = message_cstring.as_ptr();
-            DISPLAY_MESSAGE(message_pointer, 0, 0);
-        }
-    };
-}
-
 static LOG_FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
     let date = chrono::Utc::now();
     let date = date.format("%Y-%M-%d-%H");
@@ -71,6 +55,22 @@ static LOG_FILE: LazyLock<Mutex<File>> = LazyLock::new(|| {
             .expect("Unable to open log file"),
     )
 });
+
+/// Prints a message to the log file and to the in-game text output.
+macro_rules! wcprintln {
+    ($($arg:tt)*) => {
+        {
+            let date = chrono::Utc::now();
+            let date = date.format("%H:%M:%S%.3f");
+
+            let message_string = format!($($arg)*);
+            writeln!(LOG_FILE.lock().unwrap(), "{date} {message_string}").unwrap();
+            let message_cstring = CString::new(message_string).unwrap();
+            let message_pointer = message_cstring.as_ptr();
+            DISPLAY_MESSAGE(message_pointer, 7, 0);
+        }
+    };
+}
 
 extern fn apply_cheats_hook() {
     wcprintln!("handling 'day' cheat code");
@@ -107,9 +107,10 @@ fn attach() {
 
     let hook_function_address = apply_cheats_hook as u32;
 
-    // Address at the beginning of the 'day' cheat code branch inside the
-    // function that applies cheat codes.
-    let replacement_address: u32 = 0x4_160A4;
+    // Address near the beginning of the 'day' cheat code branch inside the
+    // function that applies cheat codes, but after it resets the cheat flags,
+    // so that it works every time instead of toggling.
+    let replacement_address: u32 = 0x4_160AD;
 
     // The instructions we're going to be putting in that branch instead,
     // to call our hook function instead of the default behavior.
