@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 macro_rules! fn_by_address {
     // We _should_ be able to declare functions statically, not require LazyLock
     // runtime initialization, but the Rust compiler rejects it as unsound.
@@ -71,22 +73,32 @@ fn_by_address! {
     ///
     /// `duration` controls how long the message is displayed.
     pub DISPLAY_MESSAGE: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
+
+    pub NEW_GAME_HOOK_TARGET: extern fn() = 0x4_051D0;
 }
 
 data_by_address! {
     pub PLAYERS_GOLD:   [u32; MAX_PLAYERS] = 0x4_ABB18;
     pub PLAYERS_LUMBER: [u32; MAX_PLAYERS] = 0x4_ACB6C;
     pub PLAYERS_OIL:    [u32; MAX_PLAYERS] = 0x4_ABBFC;
-
     pub GAME_STATE:     GameState          = 0x4_AE480;
+    pub GAME_SPEED:     u32                = 0x4_D6B38;
+    pub RACE:           Race               = 0x4_ABB7C;
 }
 
 #[repr(u16)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum GameState {
-    Playing = 3,
-    Menu = 4,
-    Victory = 6,
-    Defeat = 7,
+    InGame = 3,
+    MainMenu = 4,
+    VictoryScreen = 6,
+    DefeatScreen = 7,
+}
+
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Race {
+    Human = 0,
+    Orc = 1,
 }

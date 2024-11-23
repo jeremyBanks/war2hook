@@ -1,29 +1,17 @@
 use {
-    dll_syringe::{
-        process::{OwnedProcess, Process},
-        Syringe,
-    },
-    std::{
-        ffi::{c_char, CString},
-        fs::{File, OpenOptions},
-        io::Write,
-        mem::transmute,
-        ptr::NonNull,
-        sync::{LazyLock, Mutex},
-        thread,
-        time::{self, Duration},
-    },
+    dll_syringe::{process::OwnedProcess, Syringe},
+    std::{thread, time::Duration},
 };
 
 fn main() {
     println!("Launching WarCraft II");
 
     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
-        .args(["tigerlily", "human3"])
+        .args(["tigerlily", "orc2"])
         .spawn()
         .expect("Failed to launch WarCraft II");
 
-    thread::sleep(time::Duration::from_secs(2));
+    thread::sleep(Duration::from_secs(2));
 
     // instead of trying once, loop rapidly so we find the process quickly to
     // inject it early.
