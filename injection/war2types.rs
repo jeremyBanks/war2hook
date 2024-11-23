@@ -90,17 +90,17 @@ data_by_address! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum GameState {
-    UnknownGameState0 = 0,
+    OpeningCinematic = 0,
     UnknownGameState1 = 1,
     Exit = 2,
     InGame = 3,
     MainMenu = 4,
-    UnknownGameState5 = 5,
+    StartingGame = 5,
     VictoryScreen = 6,
     DefeatScreen = 7,
     UnknownGameState9 = 9,
     UnknownGameState10 = 10,
-    UnknownGameState11 = 11,
+    Credits = 11,
     UnknownGameState12 = 12,
     UnknownGameState13 = 13,
     UnknownGameState14 = 14,

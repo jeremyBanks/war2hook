@@ -40,7 +40,7 @@ macro_rules! wcprintln {
 extern fn day_cheat_hook() {
     try_or_die(|| {
         Ok({
-            wcprintln!("handling 'day' cheat code");
+            wcprintln!("Handling 'day' cheat code.");
 
             unsafe {
                 PLAYERS_GOLD
@@ -54,29 +54,15 @@ extern fn day_cheat_hook() {
                     .write_volatile([1337, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
             }
 
-            wcprintln!("race: {:?}", unsafe { RACE.get().read_volatile() });
-
             wcprintln!(
                 "Set all of your resources to 1337 and removed all of your opponent's resources."
             );
 
             let state = unsafe { GAME_STATE.get().read_volatile() };
-            wcprintln!("game state: {state:?}");
+            let race = unsafe { RACE.get().read_volatile() };
+            wcprintln!("{state:?} {race:?}");
         })
     })
-}
-
-/// The hook runs at the beginning of the main game loop.
-extern fn game_state_transition_hook() {
-    logln!("game state transition?");
-    try_or_die(|| {
-        Ok({
-            logln!("getting state. it's probably something we don't have programmed in...");
-            let state = unsafe { GAME_STATE.get().read_volatile() };
-            logln!("[{state:?}]");
-        })
-    });
-    GAME_STATE_TRANSITION_TARGET();
 }
 
 extern fn main_loop_hook() {
@@ -136,7 +122,18 @@ pub fn install() -> Result<(), eyre::Error> {
     logln!("Patching game state transition.");
     unsafe {
         patch_asm(0x4_2A343, |asm| {
-            asm.call(game_state_transition_hook as u64)?;
+            asm.call(hook as u64)?;
+
+            extern fn hook() {
+                try_or_die(|| {
+                    Ok({
+                        let state = unsafe { GAME_STATE.get().read_volatile() };
+                        logln!("[{state:?}]");
+                    })
+                });
+
+                GAME_STATE_TRANSITION_TARGET();
+            }
 
             Ok(())
         })?;
