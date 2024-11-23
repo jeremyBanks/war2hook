@@ -31,8 +31,9 @@ macro_rules! wcprintln {
             let message_string = format!($($arg)*);
 
             let state = unsafe { GAME_STATE.get().read_volatile() };
+            let state_s = format!("{state:?}");
 
-            logln!("[{state:?}] {message_string}");
+            logln!("[{state_s:12}] {message_string}");
 
             if GameState::InGame == state {
                 let message_cstring = CString::new(message_string).unwrap_or(c"<unable to encode as CString>".into());
@@ -168,6 +169,7 @@ pub fn install() -> Result<(), eyre::Error> {
                         let mut last_transition = LAST_TRANSITION.lock().unwrap();
                         let now = Instant::now();
                         let state = unsafe { GAME_STATE.get().read_volatile() };
+                        let state = format!("{state:?}");
 
                         if let Some(last_transition) = *last_transition {
                             let elapsed = now - last_transition;
@@ -177,9 +179,9 @@ pub fn install() -> Result<(), eyre::Error> {
                             let seconds = seconds % 60;
                             let millis = elapsed.subsec_millis();
 
-                            logln!("[{state:12?}] after {minutes:2}m {seconds:2}.{millis:03}s");
+                            logln!("[{state:12}] after {minutes:2}m {seconds:2}.{millis:03}s");
                         } else {
-                            logln!("[{state:12?}]");
+                            logln!("[{state:12}]");
                         }
 
                         *last_transition = Some(now);
