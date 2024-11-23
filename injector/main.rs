@@ -11,8 +11,6 @@ fn main() {
         .spawn()
         .expect("Failed to launch WarCraft II");
 
-    thread::sleep(Duration::from_secs(2));
-
     // instead of trying once, loop rapidly so we find the process quickly to
     // inject it early.
     let target_process: OwnedProcess;
@@ -22,6 +20,8 @@ fn main() {
             target_process = process;
             break;
         }
+
+        thread::sleep(Duration::from_millis(10));
     }
 
     println!("Found WarCraft II process.");
