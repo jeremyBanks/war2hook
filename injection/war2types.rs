@@ -82,7 +82,7 @@ data_by_address! {
 }
 
 #[repr(u16)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum GameState {
     Playing = 3,

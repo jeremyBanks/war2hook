@@ -61,23 +61,26 @@ macro_rules! wcprintln {
     ($($arg:tt)*) => {
         {
             let date = chrono::Utc::now();
-            let date = date.format("%H:%M:%S%.3f");
+            let date = date.format("%H:%m:%S%.3f");
 
             let message_string = format!($($arg)*);
-            writeln!(LOG_FILE.lock().unwrap(), "{date} {message_string}").unwrap();
-            let message_cstring = CString::new(message_string).unwrap();
-            let message_pointer = message_cstring.as_ptr();
-            DISPLAY_MESSAGE(message_pointer, 7, 0);
+
+            let state = unsafe { GAME_STATE.get().read_volatile() };
+
+            writeln!(LOG_FILE.lock().unwrap(), "{date} [{state:?}] {message_string}").unwrap();
+
+            if GameState::Playing == state {
+                let message_cstring = CString::new(message_string).unwrap();
+                let message_pointer = message_cstring.as_ptr();
+                DISPLAY_MESSAGE(message_pointer, 7, 0);
+            }
         }
     };
 }
 
-extern fn apply_cheats_hook() {
+/// This hook replaces the default behaviour of the `day` cheat code.
+extern fn day_cheat_hook() {
     wcprintln!("handling 'day' cheat code");
-
-    let current_gold = unsafe { PLAYERS_GOLD.get().read()[0] };
-    let current_lumber = unsafe { PLAYERS_LUMBER.get().read()[0] };
-    let current_oil = unsafe { PLAYERS_OIL.get().read()[0] };
 
     unsafe {
         PLAYERS_GOLD
@@ -97,6 +100,9 @@ extern fn apply_cheats_hook() {
     wcprintln!("game state: {state:?}");
 }
 
+/// The hook runs at the beginning of the main game loop.
+extern fn main_loop_hook() {}
+
 fn attach() {
     let date = chrono::Utc::now();
     let date = date.format("%H:%M:%S%.3f [attaching]");
@@ -105,7 +111,7 @@ fn attach() {
 
     writeln!(log, "{date} assembling and installing hooks").unwrap();
 
-    let hook_function_address = apply_cheats_hook as u32;
+    let hook_function_address = day_cheat_hook as u32;
 
     // Address near the beginning of the 'day' cheat code branch inside the
     // function that applies cheat codes, but after it resets the cheat flags,
@@ -165,5 +171,12 @@ fn attach() {
     // Apply the change.
     replacement_slice.copy_from_slice(&replacement_instructions);
 
-    writeln!(log, "{date} attach(): hook installed").unwrap();
+    writeln!(log, "{date} day cheat hook installed").unwrap();
+
+    // This address is the second function call in the main event loop.
+    // To maintain the original behavior, at the end this must call
+    // the original function at 0x4_051d0. Fortunately, this function has
+    // no parameters, return value, or local variables, so it doesn't require
+    // anything but a JMP.
+    let main_replacement_address = 0x4_2a343;
 }
