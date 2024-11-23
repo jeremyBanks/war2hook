@@ -64,19 +64,20 @@ extern fn day_cheat_hook() {
     })
 }
 
-static MAIN_LOOP_TICKS: AtomicU64 = AtomicU64::new(0);
-
 /// The hook runs at the beginning of the main game loop.
-extern fn new_game_hook() {
+extern fn game_state_transition() {
     try_or_die(|| {
         Ok({
-            logln!("Starting a new game.");
+            let state = unsafe { GAME_STATE.get().read_volatile() };
+            logln!("[{state:?}]");
         })
     });
-    NEW_GAME_HOOK_TARGET();
+    GAME_STATE_TRANSITION_TARGET();
 }
 
 extern fn main_loop_hook() {
+    static MAIN_LOOP_TICKS: AtomicU64 = AtomicU64::new(0);
+
     try_or_die(|| {
         Ok({
             let ticks = MAIN_LOOP_TICKS.fetch_add(1, atomic::Ordering::Acquire);
@@ -91,7 +92,7 @@ unsafe fn patch_asm(
     address: u32,
     asm: impl Fn(&mut CodeAssembler) -> Result<(), eyre::Error>,
 ) -> Result<(), eyre::Error> {
-    logln!("Assembling patch for 0x{address:0X}.");
+    logln!("Assembling  patch for 0x{address:0X}.");
 
     let mut assembler = CodeAssembler::new(32)?;
 
@@ -125,13 +126,13 @@ pub fn install() -> Result<(), eyre::Error> {
 
     use iced_x86::code_asm::{ebp, esi, esp};
 
-    // This hook is very near the beginning of the new game initialization
-    // process. The hook must call `NEW_GAME_HOOK_TARGET()` to restore the
+    // This hook is very near <SOMETHING, I'M NOW CONFUSED WHAT>.
+    // The hook must call `GAME_STATE_TRANSITION_TARGET()` to restore the
     // function call we're overwriting with the hook.
-    logln!("Patching new game.");
+    logln!("Patching game state transition.");
     unsafe {
         patch_asm(0x4_2A343, |asm| {
-            asm.call(new_game_hook as u64)?;
+            asm.call(game_state_transition as u64)?;
 
             Ok(())
         })?;

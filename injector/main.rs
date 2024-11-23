@@ -7,7 +7,7 @@ fn main() {
     println!("Launching WarCraft II");
 
     std::process::Command::new("D:\\Program Files\\Warcraft II\\Warcraft II BNE.exe")
-        .args(["tigerlily", "orc2"])
+        .args(["tigerlily", "orc3"])
         .spawn()
         .expect("Failed to launch WarCraft II");
 
