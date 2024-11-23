@@ -65,9 +65,11 @@ extern fn day_cheat_hook() {
 }
 
 /// The hook runs at the beginning of the main game loop.
-extern fn game_state_transition() {
+extern fn game_state_transition_hook() {
+    logln!("game state transition?");
     try_or_die(|| {
         Ok({
+            logln!("getting state. it's probably something we don't have programmed in...");
             let state = unsafe { GAME_STATE.get().read_volatile() };
             logln!("[{state:?}]");
         })
@@ -132,7 +134,7 @@ pub fn install() -> Result<(), eyre::Error> {
     logln!("Patching game state transition.");
     unsafe {
         patch_asm(0x4_2A343, |asm| {
-            asm.call(game_state_transition as u64)?;
+            asm.call(game_state_transition_hook as u64)?;
 
             Ok(())
         })?;
@@ -167,6 +169,8 @@ pub fn install() -> Result<(), eyre::Error> {
             Ok(())
         })?;
     }
+
+    println!("Hooks installed.");
 
     Ok(())
 }

@@ -90,10 +90,22 @@ data_by_address! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum GameState {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
     InGame = 3,
     MainMenu = 4,
+    _5 = 5,
     VictoryScreen = 6,
     DefeatScreen = 7,
+    _9 = 9,
+    _10 = 10,
+    _11 = 11,
+    _12 = 12,
+    _13 = 13,
+    _14 = 14,
+    _15 = 15,
+    _16 = 16,
 }
 
 #[repr(u8)]

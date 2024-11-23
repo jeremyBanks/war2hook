@@ -16,9 +16,6 @@ extern "system" fn DllMain(_module: HINSTANCE, event: u32, _: *mut ()) -> bool {
             try_or_die(crate::install);
             true
         },
-        _ => {
-            logln!("Ignoring Dllmain event {event}.");
-            false
-        },
+        _ => false,
     }
 }
