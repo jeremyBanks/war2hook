@@ -4,9 +4,14 @@ use {
     eyre,
     iced_x86::{self, code_asm::CodeAssembler},
     std::{
+        cell::Cell,
         ffi::CString,
         mem::transmute,
-        sync::{atomic, atomic::AtomicU64},
+        sync::{
+            atomic::{self, AtomicU64},
+            Mutex,
+        },
+        time::Instant,
     },
     windows::Win32::System::Memory::{
         VirtualProtect, PAGE_EXECUTE_READWRITE, PAGE_PROTECTION_FLAGS,
@@ -127,8 +132,26 @@ pub fn install() -> Result<(), eyre::Error> {
             extern fn hook() {
                 try_or_die(|| {
                     Ok({
+                        static LAST_TRANSITION: Mutex<Option<Instant>> = Mutex::new(None);
+
+                        let mut last_transition = LAST_TRANSITION.lock().unwrap();
+                        let now = Instant::now();
                         let state = unsafe { GAME_STATE.get().read_volatile() };
-                        logln!("[{state:?}]");
+
+                        if let Some(last_transition) = *last_transition {
+                            let elapsed = now - last_transition;
+
+                            let seconds = elapsed.as_secs();
+                            let minutes = seconds / 60;
+                            let seconds = seconds % 60;
+                            let millis = elapsed.subsec_millis();
+
+                            logln!("[{state:12?}] after {minutes:2}m {seconds:2}.{millis:03}s");
+                        } else {
+                            logln!("[{state:12?}]");
+                        }
+
+                        *last_transition = Some(now);
                     })
                 });
 
