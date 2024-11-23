@@ -54,6 +54,8 @@ extern fn day_cheat_hook() {
                     .write_volatile([1337, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
             }
 
+            wcprintln!("race: {:?}", unsafe { RACE.get().read_volatile() });
+
             wcprintln!(
                 "Set all of your resources to 1337 and removed all of your opponent's resources."
             );
