@@ -56,11 +56,14 @@ pub fn after_game_tick() -> Result<(), eyre::Error> {
     let mut timer_state = TIMER_STATE.lock().unwrap();
 
     match *timer_state {
-        TimerState::WaitingToStart =>
+        TimerState::WaitingToStart => {
             *timer_state = TimerState::Running {
                 started: Instant::now(),
                 ticks: 0,
-            },
+            };
+
+            wcstatus!(" 0m  0s");
+        },
         TimerState::Running { started, mut ticks } => {
             let duration = Instant::now() - started;
             ticks += 1;
@@ -69,7 +72,7 @@ pub fn after_game_tick() -> Result<(), eyre::Error> {
             let minutes = seconds / 60;
             let seconds = seconds % 60;
 
-            wcstatus!("{minutes:2}m {seconds:2}");
+            wcstatus!("{minutes:2}m {seconds:2}s");
 
             *timer_state = TimerState::Running { started, ticks }
         },
@@ -79,7 +82,7 @@ pub fn after_game_tick() -> Result<(), eyre::Error> {
             let seconds = seconds % 60;
             let millis = duration.subsec_millis();
 
-            wcstatus!("{minutes:2}m {seconds:2}.{millis:03} ({ticks} ticks)");
+            wcstatus!("{minutes}m {seconds} {millis}ms ({ticks} ticks)");
         },
     }
     Ok(())
@@ -91,7 +94,14 @@ pub fn before_victory_dialog() -> Result<(), eyre::Error> {
     match *timer_state {
         TimerState::Running { started, ticks } => {
             let duration = Instant::now() - started;
-            *timer_state = TimerState::Completed { duration, ticks }
+            *timer_state = TimerState::Completed { duration, ticks };
+
+            let seconds = duration.as_secs();
+            let minutes = seconds / 60;
+            let seconds = seconds % 60;
+            let millis = duration.subsec_millis();
+
+            wcstatus!("{minutes}m {seconds} {millis}ms ({ticks} ticks)");
         },
         _ => {},
     }
