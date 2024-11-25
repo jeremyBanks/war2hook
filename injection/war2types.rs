@@ -74,7 +74,8 @@ fn_by_address! {
     /// `duration` controls how long the message is displayed.
     pub DISPLAY_MESSAGE: extern fn(message: *const i8, playerNumber: u8, duration: u32) = 0x4_2CA40;
 
-    pub GAME_STATE_TRANSITION_TARGET: extern fn() = 0x4_051D0;
+    pub IMG_UPDATE: extern fn() = 0x4_051D0;
+    pub GAME_EVENT_RESET: extern fn() = 0x4_203F0;
 }
 
 data_by_address! {
