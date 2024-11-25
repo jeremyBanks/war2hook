@@ -237,6 +237,17 @@ pub fn install() -> Result<(), eyre::Error> {
 
                 try_or_die(|| {
                     Ok({
+                        // Okay, so, we need some logic:
+                        // When we have a state transition, set start_time and
+                        // start_instant to None.
+                        // When we have our first tick, then initialize them.
+                        // They should appear the same frame as the cursor.
+                        // When we see the victory message, then stop incrementing
+                        // this, and start displaying milliseconds and ticks
+                        // until that point, only display minutes and seconds
+                        // to reduce noise.
+                        // This logic really shouldn't live here, though, lol.
+
                         let ticks = MAIN_LOOP_TICKS.fetch_add(1, atomic::Ordering::SeqCst);
 
                         let last_transition = LAST_TRANSITION.lock().unwrap();
