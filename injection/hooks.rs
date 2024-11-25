@@ -82,7 +82,7 @@ pub fn after_game_tick() -> Result<(), eyre::Error> {
             let seconds = seconds % 60;
             let millis = duration.subsec_millis();
 
-            wcstatus!("{minutes}m {seconds} {millis}ms ({ticks} ticks)");
+            wcstatus!("{minutes}m {seconds}s {millis}ms ({ticks} ticks)");
         },
     }
     Ok(())
@@ -101,7 +101,7 @@ pub fn before_victory_dialog() -> Result<(), eyre::Error> {
             let seconds = seconds % 60;
             let millis = duration.subsec_millis();
 
-            wcstatus!("{minutes}m {seconds} {millis}ms ({ticks} ticks)");
+            wcstatus!("{minutes}m {seconds}s {millis}ms ({ticks} ticks)");
         },
         _ => {},
     }
